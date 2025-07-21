@@ -1,0 +1,40 @@
+name: Autograding Tests
+'on':
+- push
+- repository_dispatch
+permissions:
+  checks: write
+  actions: read
+  contents: read
+jobs:
+  run-autograding-tests:
+    runs-on: ubuntu-latest
+    if: github.actor != 'github-classroom[bot]'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    - name: HTMLHint
+      id: htmlhint
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: HTMLHint
+        setup-command: npm install htmlhint
+        command: npx htmlhint index.html
+        timeout: 10
+        max-score: 5
+    - name: Required HTML Tags
+      id: required-html-tags
+      uses: classroom-resources/autograding-command-grader@v1
+      with:
+        test-name: Required HTML Tags
+        setup-command: npm install
+        command: node test/check-tags.js
+        timeout: 10
+        max-score: 5
+    - name: Autograding Reporter
+      uses: classroom-resources/autograding-grading-reporter@v1
+      env:
+        HTMLHINT_RESULTS: "${{steps.htmlhint.outputs.result}}"
+        REQUIRED-HTML-TAGS_RESULTS: "${{steps.required-html-tags.outputs.result}}"
+      with:
+        runners: htmlhint,required-html-tags
